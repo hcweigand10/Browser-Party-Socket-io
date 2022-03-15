@@ -14,7 +14,7 @@ const app = express();
 
 // DEPLOYED
 app.use(cors({
-  origin:"https://browser-party.herokuapp.com/" 
+  origin:"https://browser-party.herokuapp.com" 
 }))
 
 const PORT = process.env.PORT || 4000;
@@ -25,7 +25,7 @@ const theServer = createServer();
 const io = new Server(theServer, {
   cors: {
     // Check local vs deployed
-    origin: "https://browser-party.herokuapp.com/",
+    origin: "https://browser-party.herokuapp.com",
     credentials: true
   }
 });
