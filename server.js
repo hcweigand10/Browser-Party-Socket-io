@@ -10,12 +10,12 @@ const app = express();
 // if we don't run this we get a CORS error
 
 // LOCAL
-// app.use(cors());
+app.use(cors());
 
 // DEPLOYED
-app.use(cors({
-  origin:"https://browser-party.herokuapp.com/" 
-}))
+// app.use(cors({
+//   origin:"https://browser-party.herokuapp.com/" 
+// }))
 
 const PORT = process.env.PORT || 4000;
 const URL = process.env.URL || "http://localhost:3000";
@@ -25,22 +25,23 @@ const theServer = createServer();
 const io = new Server(theServer, {
   cors: {
     // Check local vs deployed
-    origin: "https://browser-party.herokuapp.com",
+    origin: URL,
     credentials: true
   }
 });
 
 let rooms = {}
 
-const generateTrivia = async (category, socket, roomName) => {
+const generateTrivia = async (category, socket, roomName, time) => {
     console.log("trivia")
-    let categoryCode = ""
     if (category === "geography") {
         categoryCode = 22
+    } else if (category = "general") {
+        categoryCode = 9
     }
     let response = await axios({
         method: 'get',
-        url: `https://opentdb.com/api.php?amount=1&category=22&difficulty=medium&type=multiple`,
+        url: `https://opentdb.com/api.php?amount=1&category=${categoryCode}&difficulty=medium&type=multiple`,
       })
     const results = response.data.results[0];
     console.log(results)
@@ -53,7 +54,7 @@ const generateTrivia = async (category, socket, roomName) => {
     }
     
     console.log(triviaObj)
-    io.emit(`trivia${roomName}`,triviaObj)
+    io.emit(`start-trivia-${roomName}`,triviaObj, time)
 }
 
 
@@ -149,28 +150,46 @@ const showScoreboard = (socket, room) => {
 const wait = (timeToDelay) => new Promise((resolve) => setTimeout(resolve, timeToDelay));
 
 const runGame = async (socket, room) => {
-    // pregame scoreboard
-    showScoreboard(socket, room.name);
-    await wait(5000);
-    // start round 1
-    incrementRound(socket, room.name);
-    io.emit(`start-whack${room.name}`)
-    await wait(35000);
-    // end round 1, update scores and show scoreboard
-    updatePlayers(socket, room);
-    showScoreboard(socket, room.name);
-    await wait(5000);
-    // start round 2
-    incrementRound(socket, room.name);
-    await wait(3000);
-    io.emit(`start-memory${room.name}`)
-    await wait(35000);
-    // end round 2, update scores and show scoreboard
-    updatePlayers(socket, room);
+    // // pregame scoreboard
+    // showScoreboard(socket, room.name);
+    // await wait(5000);
+    // // start round 1
+    // incrementRound(socket, room.name);
+    // io.emit(`start-whack${room.name}`)
+    // await wait(35000);
+    // // end round 1, update scores and show scoreboard
+    // updatePlayers(socket, room);
+    // showScoreboard(socket, room.name);
+    // await wait(5000);
+    // // start round 2
+    // incrementRound(socket, room.name);
+    // await wait(3000);
+    // io.emit(`start-memory${room.name}`)
+    // await wait(35000);
+    // // end round 2, update scores and show scoreboard
+    // updatePlayers(socket, room);
+    await runRound(socket, room, "trivia1", 20)
+    await runRound(socket, room, "whack", 30)
+    await runRound(socket, room, "memory", 30)
     endGame(socket, room.name)
     // start round 3
     // generateTrivia(geography, socket, room.name);
     // incrementRound(socket, room.name);
+}
+
+const runRound = async (socket, room, round, time) => {
+  showScoreboard(socket, room.name);
+  await wait(5000);
+  incrementRound(socket, room.name);
+  if (round === "trivia1") {
+    generateTrivia("geography", socket, room, (time*1000))
+  } else if (round === "trivia2") {
+    generateTrivia("general", socket, room, (time*1000))
+  } else {
+    io.emit(`start-${round}-${room.name}`, (time*1000))
+  }
+  await wait ((time+3)*1000)
+  updatePlayers(socket, room)
 }
 
 const endGame = (socket, roomName) => {
@@ -182,7 +201,11 @@ io.on('connection', socket => {
     // when a user connects
     console.log("You are now connected. This socket ID is unique everytime: " + socket.id);
     
-    socket.on('join-room', (roomName, username) => {
+  socket.on('join-room', (roomName, username, callback) => {
+    if (rooms[roomName]) {
+      callback({
+        status: "ok"
+      })
       socket.username = username;
       socket.score = 0
       console.log(`attempting to join room ${roomName}`)
@@ -190,22 +213,39 @@ io.on('connection', socket => {
       joinRoom(socket, room);
       console.log(room)
       updatePlayers(socket, room)
-    });
+    } else {
+      callback({
+        status: "bad"
+      })
+      return;
+    }
+  });
 
-  socket.on('create-room', (roomName, username) => {
-    socket.username = username
-    socket.isHost = roomName
-    socket.score = 0
-    const room = {
-      // id: uuidv4(), // generate a unique id for the new room, that way we don't need to deal with duplicates.
-      name: roomName,
-      sockets: [],
-    };
-    rooms[roomName] = room;
-    // have the socket join the room they've just created.
-    joinRoom(socket, room);
-    console.log(room);
-    updatePlayers(socket, room);
+  socket.on('create-room', (roomName, username, callback) => {
+    if (rooms[roomName]) {
+      callback({
+        status: "bad"
+      })
+      return;
+    } else {
+      console.log("room good")
+      callback({
+        status: "ok"
+      })
+      socket.username = username
+      socket.isHost = roomName
+      socket.score = 0
+      const room = {
+        // id: uuidv4(), // generate a unique id for the new room, that way we don't need to deal with duplicates.
+        name: roomName,
+        sockets: [],
+      };
+      rooms[roomName] = room;
+      // have the socket join the room they've just created.
+      joinRoom(socket, room);
+      console.log(room);
+      updatePlayers(socket, room);
+    }
   });
 
   socket.on('leave-room', (roomName, username) => {
