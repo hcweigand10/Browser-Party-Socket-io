@@ -10,12 +10,12 @@ const app = express();
 // if we don't run this we get a CORS error
 
 // LOCAL
-// app.use(cors());
+app.use(cors());
 
 // DEPLOYED
-app.use(cors({
-  origin:"https://browser-party.herokuapp.com" 
-}))
+// app.use(cors({
+//   origin:"https://browser-party.herokuapp.com" 
+// }))
 
 const PORT = process.env.PORT || 4000;
 const URL = process.env.URL || "http://localhost:3000";
@@ -25,7 +25,7 @@ const theServer = createServer();
 const io = new Server(theServer, {
   cors: {
     // Check local vs deployed
-    origin: "https://browser-party.herokuapp.com",
+    origin: URL,
     credentials: true
   }
 });
@@ -172,7 +172,6 @@ io.on('connection', socket => {
       console.log(`attempting to join room ${roomName}`)
       const room = rooms[roomName];
       joinRoom(socket, room);
-      console.log(room)
       updatePlayers(socket, room)
     } else {
       callback({
@@ -200,6 +199,11 @@ io.on('connection', socket => {
         // id: uuidv4(), // generate a unique id for the new room, that way we don't need to deal with duplicates.
         name: roomName,
         sockets: [],
+        messages: [{
+          username: "BrowserParty",
+          content: "Use this space to say hi to your opponents! Or talk trash and throw them off their game...",
+          id: 0
+      }]
       };
       rooms[roomName] = room;
       // have the socket join the room they've just created.
@@ -219,10 +223,6 @@ io.on('connection', socket => {
     leaveRooms(socket);
   });
 
-  socket.on('increment-round', (roomName) => {
-    incrementRound(socket, roomName)
-  });
-
   socket.on('start-game', (roomName, includeTrivia, includeWhack, includeMemory, includeSnake) => {
     const room = rooms[roomName]
     runGame(socket, room, includeTrivia, includeWhack, includeMemory, includeSnake)
@@ -231,6 +231,22 @@ io.on('connection', socket => {
   socket.on("send-score", (roundScore) => {
     socket.score = (socket.score + roundScore);
   })
+
+  socket.on('send-new-message', (data, roomName, count) => {
+    // we tell the client to execute 'new message'
+    const room = rooms[roomName]
+    console.log(room.messages)
+    const messageObj = {
+      username: socket.username,
+      content: data,
+      id: count
+    }
+    if (room.messages[room.messages.length-1] != messageObj) {
+      room.messages.push(messageObj)
+      console.log(room.messages)
+      io.in(roomName).emit('add-new-message', room.messages);
+    }
+  });
 
 })
 
