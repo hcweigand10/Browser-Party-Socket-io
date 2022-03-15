@@ -44,7 +44,6 @@ const generateTrivia = async (category, socket, roomName, time) => {
         url: `https://opentdb.com/api.php?amount=1&category=${categoryCode}&difficulty=medium&type=multiple`,
       })
     const results = response.data.results[0];
-    console.log(results)
     const triviaObj = {
         question: results.question,
         correct_answer: results.correct_answer,
@@ -67,44 +66,28 @@ const joinRoom = (socket, room) => {
 };
 
 
-const leaveRooms = (socket, roomName) => {
+const leaveRooms = (socket) => {
   const roomsToDelete = [];
-  for (const id in rooms) {
-    const room = rooms[id];
+  for (const key in rooms) {
+    const room = rooms[key];
     if (room.sockets.includes(socket)) {
-      socket.leave(id);
-      roomName = room.name
+      socket.leave(key);
       // remove the socket from the room object
       room.sockets = room.sockets.filter((item) => item !== socket);
     }
     // Prepare to delete any rooms that are now empty
     if (room.sockets.length == 0) {
-      roomsToDelete.push(room);
+      roomsToDelete.push(room.name);
+      endGame(socket, room.name)
     } else {
       updatePlayers(socket, room)
     }
   }
   // Delete all the empty rooms that we found earlier
-  for (const room of roomsToDelete) {
-    delete rooms[room.id];
-  }
-//   io.emit(`player-left${roomName}`, players)
+  roomsToDelete.forEach(element => {
+    delete rooms[element]
+  });
 };
-
-// const leaveRoom = (socket) => {
-//   for (const id in rooms) {
-//     const room = rooms[id];
-//     if (room.sockets.includes(socket)) {
-
-//     }
-//   room.sockets = room.sockets.filter((item) => item !== socket)
-//   if (room.sockets.length > 0) {
-//     updatePlayers(socket, room)
-//   } else {
-//     delete rooms(room.name)
-//   }
-//   console.log(rooms)
-// }
 
 const updatePlayers = (socket, room) => {
   const players = []
@@ -120,24 +103,10 @@ const updatePlayers = (socket, room) => {
   io.emit(`update-players${room.name}`, players)
 }
 
-// const newPlayer = (socket, room) => {
-//   console.log(`newplayer in room: ${room.name}`)
-//   const players = []
-//   room.sockets.forEach(element => {
-//     const player = {
-//       id: element.id,
-//       roomName: element.roomId,
-//       username: element.username,
-//       score: element.score
-//     }
-//     players.push(player)
-//   });
-//   io.emit(`new-player${room.name}`, players)
-// }
 
-const incrementRound = (socket, roomName) => {
-    console.log(`increment round in room ${roomName}`)
-    io.in(roomName).emit("increment-round")
+const setRound = (socket, roomName, round) => {
+    console.log(`set round in room ${roomName} to ${round}`)
+    io.in(roomName).emit("set-round", round)
 }
 
 const showScoreboard = (socket, room) => {
@@ -149,42 +118,34 @@ const showScoreboard = (socket, room) => {
 
 const wait = (timeToDelay) => new Promise((resolve) => setTimeout(resolve, timeToDelay));
 
-const runGame = async (socket, room) => {
-    // // pregame scoreboard
-    // showScoreboard(socket, room.name);
-    // await wait(5000);
-    // // start round 1
-    // incrementRound(socket, room.name);
-    // io.emit(`start-whack${room.name}`)
-    // await wait(35000);
-    // // end round 1, update scores and show scoreboard
-    // updatePlayers(socket, room);
-    // showScoreboard(socket, room.name);
-    // await wait(5000);
-    // // start round 2
-    // incrementRound(socket, room.name);
-    // await wait(3000);
-    // io.emit(`start-memory${room.name}`)
-    // await wait(35000);
-    // // end round 2, update scores and show scoreboard
-    // updatePlayers(socket, room);
-    await runRound(socket, room, "trivia1", 20)
-    await runRound(socket, room, "whack", 30)
-    await runRound(socket, room, "memory", 30)
+const runGame = async (socket, room, includeTrivia, includeWhack, includeMemory, includeSnake) => {
+    if (includeTrivia) {
+      await runRound(socket, room, "trivia1", 20)
+    }
+    if (includeWhack) {
+      await runRound(socket, room, "whack", 30)
+
+    }
+    if (includeMemory) {
+      await runRound(socket, room, "memory", 30)
+    }
+    if (includeSnake) {
+      await runRound(socket, room, "whack", 30)
+    }
+    if (includeTrivia) {
+      await runRound(socket, room, "trivia2", 20)
+    }
     endGame(socket, room.name)
-    // start round 3
-    // generateTrivia(geography, socket, room.name);
-    // incrementRound(socket, room.name);
 }
 
 const runRound = async (socket, room, round, time) => {
+  setRound(socket, room.name, round)
   showScoreboard(socket, room.name);
   await wait(5000);
-  incrementRound(socket, room.name);
   if (round === "trivia1") {
-    generateTrivia("geography", socket, room, (time*1000))
+    generateTrivia("geography", socket, room.name, (time*1000))
   } else if (round === "trivia2") {
-    generateTrivia("general", socket, room, (time*1000))
+    generateTrivia("general", socket, room.name, (time*1000))
   } else {
     io.emit(`start-${round}-${room.name}`, (time*1000))
   }
@@ -262,9 +223,9 @@ io.on('connection', socket => {
     incrementRound(socket, roomName)
   });
 
-  socket.on('start-game', (roomName) => {
+  socket.on('start-game', (roomName, includeTrivia, includeWhack, includeMemory, includeSnake) => {
     const room = rooms[roomName]
-    runGame(socket, room)
+    runGame(socket, room, includeTrivia, includeWhack, includeMemory, includeSnake)
   });
 
   socket.on("send-score", (roundScore) => {
