@@ -100,19 +100,19 @@ const updatePlayers = (socket, room) => {
     }
     players.push(player)
   });
-  io.emit(`update-players${room.name}`, players)
+  io.emit(`update-players-${room.name}`, players)
 }
 
 
 const setRound = (socket, roomName, round) => {
     console.log(`set round in room ${roomName} to ${round}`)
-    io.in(roomName).emit("set-round", round)
+    io.in(roomName).emit(`set-round-${roomName}`, round)
 }
 
 const showScoreboard = (socket, room) => {
-    io.emit(`scoreboard${room}`, true)
+    io.emit(`scoreboard-${room}`, true)
     setTimeout(() => {
-        io.emit(`scoreboard${room}`, false)
+        io.emit(`scoreboard-${room}`, false)
     }, 5000);
 }
 
