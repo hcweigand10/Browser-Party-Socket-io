@@ -10,12 +10,12 @@ const app = express();
 // if we don't run this we get a CORS error
 
 // LOCAL
-app.use(cors());
+// app.use(cors());
 
 // DEPLOYED
-// app.use(cors({
-//   origin:"https://browser-party.herokuapp.com" 
-// }))
+app.use(cors({
+  origin:"https://browser-party.herokuapp.com" 
+}))
 
 const PORT = process.env.PORT || 4000;
 const URL = process.env.URL || "http://localhost:3000";
@@ -25,7 +25,7 @@ const theServer = createServer();
 const io = new Server(theServer, {
   cors: {
     // Check local vs deployed
-    origin: URL,
+    origin: "https://browser-party.herokuapp.com",
     credentials: true
   }
 });
