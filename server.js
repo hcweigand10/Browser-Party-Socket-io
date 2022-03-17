@@ -31,6 +31,7 @@ const io = new Server(theServer, {
 });
 
 let rooms = {}
+const preRoundLength = 10 // in seconds (how long we show scoreboard/instructions between rounds)
 
 const generateTrivia = async (category, socket, roomName, time) => {
     console.log("trivia")
@@ -113,7 +114,7 @@ const showScoreboard = (socket, room) => {
     io.emit(`scoreboard-${room}`, true)
     setTimeout(() => {
         io.emit(`scoreboard-${room}`, false)
-    }, 5000);
+    }, preRoundLength*1000);
 }
 
 const wait = (timeToDelay) => new Promise((resolve) => setTimeout(resolve, timeToDelay));
@@ -141,7 +142,7 @@ const runGame = async (socket, room, includeTrivia, includeWhack, includeMemory,
 const runRound = async (socket, room, round, time) => {
   setRound(socket, room.name, round)
   showScoreboard(socket, room.name);
-  await wait(5000);
+  await wait(preRoundLength*1000);
   if (round === "trivia1") {
     generateTrivia("geography", socket, room.name, (time*1000))
   } else if (round === "trivia2") {
