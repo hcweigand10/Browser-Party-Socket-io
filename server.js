@@ -24,6 +24,8 @@ app.use(cors({
 const PORT = process.env.PORT || 4000;
 const URL = process.env.URL || "http://localhost:3000";
 
+console.log(PORT)
+
 // for now, take this as boilerplate
 const theServer = createServer();
 const io = new Server(theServer, {
@@ -265,5 +267,5 @@ io.on('connection', socket => {
 })
 
 theServer.listen(PORT, function () {
-  console.log(`listening on port ${PORT}`)
+  console.log(`listening on port number ${PORT}`)
 })
