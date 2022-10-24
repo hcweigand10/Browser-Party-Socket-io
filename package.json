@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server",
+    "dev": "nodemon server"
   },
   "dependencies": {
     "axios": "^0.26.1",
