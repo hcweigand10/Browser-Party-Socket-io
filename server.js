@@ -117,6 +117,13 @@ const showScoreboard = (socket, room) => {
     }, preRoundLength*1000);
 }
 
+const showCountdown = (socket, room) => {
+    io.emit(`countdown-${room}`, true)
+    setTimeout(() => {
+        io.emit(`countdown-${room}`, false)
+    }, 5000);
+}
+
 const wait = (timeToDelay) => new Promise((resolve) => setTimeout(resolve, timeToDelay));
 
 const runGame = async (socket, room, includeTrivia, includeWhack, includeMemory, includeSnake) => {
@@ -143,6 +150,8 @@ const runRound = async (socket, room, round, time) => {
   setRound(socket, room.name, round)
   showScoreboard(socket, room.name);
   await wait(preRoundLength*1000);
+  showCountdown(socket, room.name)
+  await wait(5000)
   if (round === "trivia1") {
     generateTrivia("geography", socket, room.name, (time*1000))
   } else if (round === "trivia2") {
