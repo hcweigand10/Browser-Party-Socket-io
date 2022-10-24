@@ -8,15 +8,17 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 
 // if we don't run this we get a CORS error
+const localUrl = "http://localhost:3000"
+const deployedUrl = "https://browser-party.herokuapp.com"
 
 // LOCAL
 app.use(cors({
-  origin:"http://localhost:3000"
+  origin:localUrl
 }));
 
 // DEPLOYED
 // app.use(cors({
-  // origin:"https://browser-party.herokuapp.com" 
+  // origin:deployedUrl 
 // }))
 
 const PORT = process.env.PORT || 4000;
@@ -27,7 +29,7 @@ const theServer = createServer();
 const io = new Server(theServer, {
   cors: {
     // Check local vs deployed
-    origin: "https://browser-party.herokuapp.com",
+    origin: localUrl,
     credentials: true
   }
 });
