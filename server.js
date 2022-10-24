@@ -10,7 +10,9 @@ const app = express();
 // if we don't run this we get a CORS error
 
 // LOCAL
-app.use(cors());
+app.use(cors({
+  origin:"http://localhost:3000"
+}));
 
 // DEPLOYED
 // app.use(cors({
