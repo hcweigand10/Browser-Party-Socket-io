@@ -5,9 +5,8 @@
   "main": "server.js",
   "license": "MIT",
   "scripts": {
-    "start": "npm run socket",
+    "start": "node server.js",
     "dev": "nodemon server",
-    "socket": "node server.js"
   },
   "dependencies": {
     "axios": "^0.26.1",
