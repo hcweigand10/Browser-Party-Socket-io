@@ -9,19 +9,21 @@ const app = express();
 
 // if we don't run this we get a CORS error
 const localUrl = "http://localhost:3000";
-const deployedUrl = "https://browser-party.herokuapp.com";
+const deployedUrl = "https://browserparty.netlify.app";
 
 // LOCAL
-app.use(
-    cors({
-        origin: localUrl,
-    })
-);
+// app.use(
+//     cors({
+//         origin: localUrl,
+//     })
+// );
 
 // DEPLOYED
-// app.use(cors({
-// origin:deployedUrl
-// }))
+app.use(
+    cors({
+        origin: deployedUrl,
+    })
+);
 
 const PORT = process.env.PORT || 4000;
 const URL = process.env.URL || "http://localhost:3000";
@@ -33,7 +35,7 @@ const theServer = createServer();
 const io = new Server(theServer, {
     cors: {
         // Check local vs deployed
-        origin: localUrl,
+        origin: deployedUrl,
         credentials: true,
     },
 });
