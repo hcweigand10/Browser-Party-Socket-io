@@ -37,6 +37,8 @@ const io = new Server(theServer, {
     },
 });
 
+io.set('transports', [ 'websocket', 'flashsocket', 'polling' ] );
+
 let rooms = {};
 const preRoundLength = 8; // in seconds (how long we show scoreboard/instructions between rounds)
 
