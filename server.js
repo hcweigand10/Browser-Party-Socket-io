@@ -13,14 +13,14 @@ const deployedUrl = "https://browserparty.netlify.app";
 
 // LOCAL
 // app.use(
-//     cors({
-//         origin: localUrl,
-//     })
+//     cors()
 // );
 
 // DEPLOYED
 app.use(
-    cors()
+    cors({
+        origin: deployedUrl,
+    })
 );
 
 const PORT = process.env.PORT || 4000;
@@ -32,12 +32,10 @@ const theServer = createServer();
 const io = new Server(theServer, {
     cors: {
         // Check local vs deployed
-        origin: localUrl,
+        origin: deployedUrl,
         credentials: true,
     },
 });
-
-io.set('transports', [ 'websocket', 'flashsocket', 'polling' ] );
 
 let rooms = {};
 const preRoundLength = 8; // in seconds (how long we show scoreboard/instructions between rounds)
