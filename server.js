@@ -20,15 +20,12 @@ const deployedUrl = "https://browserparty.netlify.app";
 
 // DEPLOYED
 app.use(
-    cors({
-        origin: localUrl,
-    })
+    cors()
 );
 
 const PORT = process.env.PORT || 4000;
 const URL = process.env.URL || "http://localhost:3000";
 
-console.log(PORT);
 
 // for now, take this as boilerplate
 const theServer = createServer();
