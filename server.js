@@ -21,7 +21,7 @@ const deployedUrl = "https://browserparty.netlify.app";
 // DEPLOYED
 app.use(
     cors({
-        origin: deployedUrl,
+        origin: localUrl,
     })
 );
 
@@ -35,7 +35,7 @@ const theServer = createServer();
 const io = new Server(theServer, {
     cors: {
         // Check local vs deployed
-        origin: deployedUrl,
+        origin: localUrl,
         credentials: true,
     },
 });
