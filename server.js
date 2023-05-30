@@ -38,7 +38,7 @@ const io = new Server(theServer, {
 });
 
 let rooms = {};
-const preRoundLength = 8; // in seconds (how long we show scoreboard/instructions between rounds)
+const preRoundLength = 6; // in seconds (how long we show scoreboard/instructions between rounds)
 
 const generateTrivia = async (category, socket, roomName, time) => {
     console.log("trivia");
