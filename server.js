@@ -24,8 +24,6 @@ app.use(
 );
 
 const PORT = process.env.PORT || 4000;
-const URL = process.env.URL || "http://localhost:3000";
-
 
 // for now, take this as boilerplate
 const theServer = createServer();
